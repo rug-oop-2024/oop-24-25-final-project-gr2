@@ -23,27 +23,56 @@ class Artifact:
         self._metadata = metadata if metadata is not None else {}
         self._type = type
         self._tags = tags if tags is not None else []
-        self._id = (
-            (
-                f"{base64.b64encode(self.asset_path.encode()).decode()}"
-                f":{self.version}"
-            )
-        )
+        self._id = self._generate_id()
 
-    def read(self) -> bytes:
-        """
-        Reads the data from the artifact.
-        """
+    def _generate_id(self) -> str:
+        if not self._asset_path:
+            raise ValueError("asset_path must be non-empty.")
+        if not self._version:
+            raise ValueError("version must be non-empty.")
+
+        encoded_path = base64.urlsafe_b64encode(
+            self._asset_path.encode()
+        ).decode()
+        return f"{encoded_path}:{self._version}"
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    @property
+    def data(self) -> bytes:
         return self._data
 
-    def save(self, new_data: bytes) -> None:
+    def to_dictionary(self) -> Dict[str, Any]:
         """
-        Saves new data to the artifact.
+        Converts the artifact to a dictionary.
         """
-        self._data = new_data
+        return {
+            "name": self._name,
+            "asset_path": self._asset_path,
+            "version": self._version,
+            "data": base64.b64encode(self._data).decode(),
+            "metadata": self._metadata,
+            "type": self._type,
+            "tags": self._tags,
+        }
 
-    def __repr__(self):
-        return (
-            f"Artifact(name=\"{self._name}\", type=\"{self._type}\", "
-            f"id=\"{self._id}\")"
+    @classmethod
+    def from_dictionary(cls, data: Dict[str, Any]) -> "Artifact":
+        """
+        Makes an artifact from a dictionary.
+        """
+        return Artifact(
+            name=data.get("name", ""),
+            asset_path=data["asset_path"],
+            version=data["version"],
+            data=base64.b64decode(data["data"]),
+            metadata=data.get("metadata", {}),
+            type=data.get("type", "generic"),
+            tags=data.get("tags", []),
         )
+
+    def __str__(self):
+        return f"Artifact(name={self._name}, asset_path={self._asset_path}, \
+            version={self._version})"
