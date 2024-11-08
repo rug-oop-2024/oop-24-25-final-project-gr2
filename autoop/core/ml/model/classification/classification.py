@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import pickle
+from copy import deepcopy
 
 
 class GradientBoostingClassificationModel(Model):
@@ -11,6 +12,10 @@ class GradientBoostingClassificationModel(Model):
         super().__init__(type="classification")
         self._parameters = parameters if parameters else {}
         self._model = GradientBoostingClassifier(**self._parameters)
+
+    @property
+    def parameters(self) -> dict:
+        return deepcopy(self._parameters)
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         self._model.fit(X, y)
@@ -29,6 +34,10 @@ class LogisticRegressionModel(Model):
         self._parameters = parameters if parameters else {}
         self._model = LogisticRegression(**self._parameters)
 
+    @property
+    def parameters(self) -> dict:
+        return deepcopy(self._parameters)
+
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         self._model.fit(X, y)
 
@@ -45,6 +54,10 @@ class RandomForestClassificationModel(Model):
         super().__init__(type="classification")
         self._parameters = parameters if parameters else {}
         self._model = RandomForestClassifier(**self._parameters)
+
+    @property
+    def parameters(self) -> dict:
+        return deepcopy(self._parameters)
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         self._model.fit(X, y)

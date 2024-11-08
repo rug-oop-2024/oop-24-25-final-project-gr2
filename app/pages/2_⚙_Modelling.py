@@ -3,6 +3,42 @@ import pandas as pd
 from io import StringIO
 
 from app.core.system import AutoMLSystem
+from autoop.core.ml.model import (
+    LassoRegressionModel,
+    GBRModel,
+    RandomForestRegressionModel,
+    MultipleLinearRegression,
+    GradientBoostingClassificationModel,
+    LogisticRegressionModel,
+    RandomForestClassificationModel,
+)
+
+# Available models
+MODEL_OPTIONS = {
+    "Classification": {
+        "Logistic Regression": LogisticRegressionModel,
+        "Random Forest Classifier": RandomForestClassificationModel,
+        "Gradient Boosting Classifier": GradientBoostingClassificationModel,
+    },
+    "Regression": {
+        "Lasso Regression": LassoRegressionModel,
+        "Gradient Boosting Regressor": GBRModel,
+        "Random Forest Regressor": RandomForestRegressionModel,
+        "Multiple Linear Regression": MultipleLinearRegression,
+    },
+}
+
+
+# Metrics
+METRICS = {
+    "Regression": [
+        "mean_squared_error",
+        "mean_absolute_error",
+        "mean_squared_log_error",
+        "r_squared",
+    ],
+    "Classification": ["accuracy", "balanced_accuracy", "recall", "mcc"],
+}
 
 st.set_page_config(page_title="Modelling", page_icon="📈")
 
@@ -87,5 +123,59 @@ if datasets:
             st.write(f"Detected Task Type: {task_type}")
         else:
             st.info("Selecting a target feature is mandatory.")
+
+        st.divider()
+        st.subheader("Model Selection")
+
+        # Selecting model
+        available_models = MODEL_OPTIONS.get(task_type, {})
+        model_names = list(available_models.keys())
+
+        selected_model_name = st.selectbox(
+            f"Select one of the following models for {task_type}",
+            options=model_names,
+            help="Choose a machine learning model.",
+        )
+
+        if selected_model_name:
+            selected_model = available_models[selected_model_name]
+
+        # Split ratio
+        st.divider()
+        st.subheader("Split Ratio")
+
+        train_set_per = st.slider(
+            "Select the percentage of data to be used for training",
+            min_value=10,
+            max_value=90,
+            value=80,
+            step=5,
+            help="Define the split ratio of the data(training%|testing%).",
+        )
+        test_set_per = 100 - train_set_per
+        st.write(f"Training Data: {train_set_per}%")
+        st.write(f"Testing Data: {test_set_per}%")
+
+        # Metrics selection
+
+        st.divider()
+        st.subheader("Metrics")
+
+        if task_type == "Regression":
+            available_metrics = METRICS["Regression"]
+            select_metrics = st.multiselect(
+                "Select metrics to evaluate the model",
+                options=available_metrics,
+                help="Choose one or more metrics to evaluate the model.",
+            )
+        elif task_type == "Classification":
+            available_metrics = METRICS["Classification"]
+            select_metrics = st.multiselect(
+                "Select metrics to evaluate the model",
+                options=available_metrics,
+                help="Choose one or more metrics to evaluate the model.",
+            )
+
+
 else:
     st.info("There are no datasets available. Please upload one to proceed.")
