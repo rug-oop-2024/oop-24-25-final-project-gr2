@@ -1,5 +1,6 @@
 import base64
 from typing import Any, Dict, List, Optional
+from copy import deepcopy
 
 
 class Artifact:
@@ -41,8 +42,32 @@ class Artifact:
         return self._id
 
     @property
+    def asset_path(self) -> str:
+        return self._asset_path
+
+    @property
+    def version(self) -> str:
+        return self._version
+
+    @property
     def data(self) -> bytes:
         return self._data
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        return deepcopy(self._metadata)
+
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @property
+    def tags(self) -> List[str]:
+        return deepcopy(self._tags)
 
     def read(self) -> Dict[str, Any]:
         """
