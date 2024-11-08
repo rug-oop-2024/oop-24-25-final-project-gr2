@@ -30,7 +30,7 @@ class TestFeatures(unittest.TestCase):
         for feature in features:
             self.assertIsInstance(feature, Feature)
             self.assertEqual(feature.name in iris.feature_names, True)
-            self.assertEqual(feature.type, "numerical")
+            self.assertEqual(feature.feature_type, "numerical")
 
     def test_detect_features_with_categories(self):
         data = fetch_openml(name="adult", version=1, parser="auto")
@@ -69,8 +69,8 @@ class TestFeatures(unittest.TestCase):
         for detected_feature in filter(
             lambda x: x.name in numerical_columns, features
         ):
-            self.assertEqual(detected_feature.type, "numerical")
+            self.assertEqual(detected_feature.feature_type, "numerical")
         for detected_feature in filter(
             lambda x: x.name in categorical_columns, features
         ):
-            self.assertEqual(detected_feature.type, "categorical")
+            self.assertEqual(detected_feature.feature_type, "categorical")

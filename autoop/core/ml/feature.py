@@ -8,18 +8,22 @@ class Feature(Dataset):
                  name: str,
                  feature_type: Literal["numerical", "categorical"]):
         self._name = name
-        self._type = feature_type
+        self._feature_type = feature_type
 
     def __str__(self):
-        return f"Feature(name='{self._name}', type='{self._type}')"
+        return f"Feature(name='{self._name}', type='{self._feature_type}')"
 
     def __eq__(self, other):
         return (
             isinstance(other, Feature)
             and self._name == other._name
-            and self._type == other._type
+            and self._feature_type == other._feature_type
         )
 
     @property
-    def type(self) -> Literal["numerical", "categorical"]:
-        return self._type
+    def feature_type(self) -> Literal["numerical", "categorical"]:
+        return self._feature_type
+
+    @property
+    def name(self) -> str:
+        return self._name

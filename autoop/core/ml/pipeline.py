@@ -27,27 +27,28 @@ class Pipeline:
         self._metrics = metrics
         self._artifacts = {}
         self._split = split
-        if (target_feature.type == "categorical" and
+        if (target_feature.feature_type == "categorical" and
                 model.type != "classification"):
             raise ValueError(
                 "Model type must be classification \
                 for categorical target feature"
             )
-        if target_feature.type == "continuous" and model.type != "regression":
+        if (target_feature.feature_type == "continuous" and
+                model.type != "regression"):
             raise ValueError(
                 "Model type must be regression for continuous target feature"
             )
 
     def __str__(self):
         return f"""
-Pipeline(
-    model={self._model.type},
-    input_features={list(map(str, self._input_features))},
-    target_feature={str(self._target_feature)},
-    split={self._split},
-    metrics={list(map(str, self._metrics))},
-)
-"""
+        Pipeline(
+            model={self._model.type},
+            input_features={list(map(str, self._input_features))},
+            target_feature={str(self._target_feature)},
+            split={self._split},
+            metrics={list(map(str, self._metrics))},
+        )
+        """
 
     @property
     def model(self):
@@ -123,33 +124,35 @@ Pipeline(
         Y = self._train_y
         self._model.fit(X, Y)
 
-    def _evaluate(self, X: np.ndarray, Y: np.ndarray):
-        metrics_results = []
+    def _evaluate(self):
+        X = self._compact_vectors(self._test_X)
+        Y = self._test_y
+        self._metrics_results = []
         predictions = self._model.predict(X)
-
         for metric in self._metrics:
             result = metric(predictions, Y)
-            metrics_results.append((str(metric), result))
-
-        return {
-            "metrics": metrics_results,
-            "predictions": predictions,
-        }
+            self._metrics_results.append((metric, result))
+        self._predictions = predictions
 
     def execute(self):
         self._preprocess_features()
         self._split_data()
         self._train()
 
+        # Training Set
         train_X = self._compact_vectors(self._train_X)
-        train_Y = self._train_y
-        train_evaluation = self._evaluate(train_X, train_Y)
+        train_y = self._train_y
+        train_predictions = self._model.predict(train_X)
+        train_results = []
+        for metric in self._metrics:
+            train_results.append((metric, metric(train_predictions, train_y)))
 
-        test_X = self._compact_vectors(self._test_X)
-        test_Y = self._test_y
-        test_evaluation = self._evaluate(test_X, test_Y)
+        # Evaluation Set
+        self._evaluate()
 
         return {
-            "training": train_evaluation,
-            "evaluation": test_evaluation,
+            "train_metrics": train_results,
+            "test_metrics": self._metrics_results,
+            "test_predictions": self._predictions,
+            "train_predictions": train_predictions
         }

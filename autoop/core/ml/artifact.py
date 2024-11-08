@@ -44,7 +44,7 @@ class Artifact:
     def data(self) -> bytes:
         return self._data
 
-    def to_dictionary(self) -> Dict[str, Any]:
+    def read(self) -> Dict[str, Any]:
         """
         Converts the artifact to a dictionary.
         """
@@ -59,7 +59,7 @@ class Artifact:
         }
 
     @classmethod
-    def from_dictionary(cls, data: Dict[str, Any]) -> "Artifact":
+    def save(cls, data: Dict[str, Any]) -> "Artifact":
         """
         Makes an artifact from a dictionary.
         """
