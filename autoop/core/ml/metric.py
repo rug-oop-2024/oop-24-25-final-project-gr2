@@ -10,7 +10,7 @@ METRICS = [
     "balanced_accuracy",
     "recall",
     "mcc",
-]  # add the names (in strings) of the metrics you implement
+]
 
 
 def get_metric(name: str):
@@ -37,6 +37,13 @@ def get_metric(name: str):
 class Metric(ABC):
     """Base class for all metrics."""
 
+    def __init__(self) -> None:
+        self._name = ""
+
+    @property
+    def name(self) -> str:
+        return self._name
+
     @abstractmethod
     def __call__(self, ground_truth: np.ndarray,
                  predictions: np.ndarray) -> float:
@@ -47,6 +54,13 @@ class Metric(ABC):
 
 
 class MeanSquaredError(Metric):
+    def __init__(self) -> None:
+        self._name = "mean_squared_error"
+
+    @property
+    def name(self) -> str:
+        return self._name
+
     def __call__(self, ground_truth: np.ndarray,
                  predictions: np.ndarray) -> float:
         """Calculates Mean Squared Error
@@ -55,6 +69,13 @@ class MeanSquaredError(Metric):
 
 
 class MeanAbsoluteError(Metric):
+    def __init__(self) -> None:
+        self._name = "mean_absolute_error"
+
+    @property
+    def name(self) -> str:
+        return self._name
+
     def __call__(self, predictions: np.ndarray,
                  ground_truth: np.ndarray) -> float:
         """
@@ -65,6 +86,13 @@ class MeanAbsoluteError(Metric):
 
 
 class MeanSquaredLogError(Metric):
+    def __init__(self) -> None:
+        self._name = "mean_squared_log_error"
+
+    @property
+    def name(self) -> str:
+        return self._name
+
     def __call__(self, predictions: np.ndarray,
                  ground_truth: np.ndarray) -> float:
         """
@@ -81,6 +109,13 @@ class MeanSquaredLogError(Metric):
 
 
 class RSquared(Metric):
+    def __init__(self) -> None:
+        self._name = "r_squared"
+
+    @property
+    def name(self) -> str:
+        return self._name
+
     def __call__(self, predictions: np.ndarray,
                  ground_truth: np.ndarray) -> float:
         """
@@ -96,6 +131,13 @@ class RSquared(Metric):
 
 class Accuracy(Metric):
     """Calculates the accuracy of the model."""
+
+    def __init__(self) -> None:
+        self._name = "accuracy"
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def __call__(self, ground_truth: np.ndarray,
                  predictions: np.ndarray) -> float:
@@ -145,6 +187,13 @@ class MCC(ClassifcationMetricUsingCM):
     """Class that uses the confusion matrix to calculate
     the Matthews Correlation Coefficient."""
 
+    def __init__(self) -> None:
+        self._name = "mcc"
+
+    @property
+    def name(self) -> str:
+        return self._name
+
     def compute_metric(self) -> float:
         """Computes the Matthews Correlation Coefficient."""
         conf_matrix = self._confusion_matrix
@@ -168,6 +217,13 @@ class MCC(ClassifcationMetricUsingCM):
 class BalancedAccuracy(ClassifcationMetricUsingCM):
     """Class that uses the confusion matrix
     to calculate the balanced accuracy metric."""
+
+    def __init__(self) -> None:
+        self._name = "balanced_accuracy"
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def compute_metric(self) -> float:
         """Computes the balanced accuracy metric."""
@@ -208,6 +264,13 @@ class BalancedAccuracy(ClassifcationMetricUsingCM):
 
 class Recall(ClassifcationMetricUsingCM):
     """Class that uses the confusion matrix to calculate the recall metric."""
+
+    def __init__(self) -> None:
+        self._name = "recall"
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     def compute_metric(self) -> float:
         conf_matrix = self._confusion_matrix

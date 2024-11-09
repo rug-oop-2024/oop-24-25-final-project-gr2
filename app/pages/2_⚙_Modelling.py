@@ -3,6 +3,10 @@ import pandas as pd
 from io import StringIO
 
 from app.core.system import AutoMLSystem
+from autoop.core.ml.feature import Feature
+from autoop.core.ml.pipeline import Pipeline
+from autoop.core.ml.metric import get_metric
+
 from autoop.core.ml.model import (
     LassoRegressionModel,
     GBRModel,
@@ -45,6 +49,13 @@ st.set_page_config(page_title="Modelling", page_icon="📈")
 
 def write_helper_text(text: str):
     st.write(f'<p style="color: #888;">{text}</p>', unsafe_allow_html=True)
+
+
+def feature_type_to_str(f_dtype) -> str:
+    if f_dtype in ["int64", "float64"]:
+        return "numerical"
+    elif f_dtype in ["object", "bool", "category"]:
+        return "categorical"
 
 
 st.write("# ⚙ Modelling")
@@ -97,6 +108,10 @@ if datasets:
         all_columns = df.columns.tolist()
 
         # Selection of input features
+
+        st.divider()
+        st.subheader("Feature Selection")
+
         input_features = st.multiselect(
             "Select input features",
             options=all_columns,
@@ -115,12 +130,13 @@ if datasets:
         if target_feature:
             # Determine the task type
             target_dtype = df[target_feature].dtype
-            if target_dtype in ["int64", "float64"]:
+            feature_type = feature_type_to_str(target_dtype)
+            if feature_type == "numerical":
                 task_type = "Regression"
-            elif target_dtype in ["object", "bool", "category"]:
+            elif feature_type == "categorical":
                 task_type = "Classification"
 
-            st.write(f"Detected Task Type: {task_type}")
+            st.write(f"**Detected Task Type**: {task_type}")
         else:
             st.info("Selecting a target feature is mandatory.")
 
@@ -175,6 +191,104 @@ if datasets:
                 options=available_metrics,
                 help="Choose one or more metrics to evaluate the model.",
             )
+
+        if not select_metrics:
+            st.warning("Select AT LEAST ONE metric.")
+
+        # Create the pipeline
+
+        if st.button("Create Pipeline"):
+            # Check that all required selections are made
+            if not input_features:
+                st.warning("Select AT LEAST ONE input feature.")
+            elif not target_feature:
+                st.warning("Selecting a target feature is mandatory.")
+            elif not select_metrics:
+                st.warning("Select AT LEAST ONE metric.")
+            else:
+                # Create Feature objects for input features
+                input_feature_objs = []
+                for feature_name in input_features:
+                    feature_dtype = feature_type_to_str(df[feature_name].dtype)
+                    input_feature_objs.append(
+                        Feature(name=feature_name, feature_type=feature_dtype)
+                    )
+
+                target_feature_type = feature_type_to_str(
+                    df[target_feature].dtype)
+                target_feature_obj = Feature(
+                    name=target_feature, feature_type=target_feature_type
+                )
+
+                model_obj = selected_model()
+
+                metrics_objs = [
+                    get_metric(metric) for metric in select_metrics
+                ]
+
+                pipeline = Pipeline(
+                    metrics=metrics_objs,
+                    dataset=selected_artifact,
+                    model=model_obj,
+                    input_features=input_feature_objs,
+                    target_feature=target_feature_obj,
+                    split=train_set_per / 100.0,
+                )
+
+                st.subheader("📑Pipeline Summary")
+
+                with st.expander("Click to view extended summary"):
+                    st.markdown(" ### Model")
+                    st.markdown(
+                        f" <span style='color:green;'>**Type:** </span> {pipeline.model.type.capitalize()}",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        "<span style='color:green;'>**Parameters:**</span>",
+                        unsafe_allow_html=True,
+                    )
+                    model_params = pipeline.model.parameters
+                    if model_params:
+                        st.json(model_params)
+                    else:
+                        st.write("No parameters set.")
+
+                    st.divider()
+                    st.markdown("### Input Features")
+                    for feature in pipeline._input_features:
+                        st.markdown(
+                            f"<span style='color:green;'>- **{feature.name}** </span>({feature.feature_type})",
+                            unsafe_allow_html=True,
+                        )
+
+                    st.divider()
+                    st.markdown("### Target Feature")
+                    st.markdown(
+                        f" <span style='color:green;'>- **{pipeline.target_feature.name}**</span> "
+                        f"({pipeline.target_feature.feature_type})",
+                        unsafe_allow_html=True,
+                    )
+
+                    st.divider()
+                    st.markdown("### Split Ratio")
+                    st.markdown(
+                        f" <span style='color:green;'>- **Training Data:** </span> "
+                        f"{train_set_per}%",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        f"<span style='color:green;'>- **Testing Data:**</span> "
+                        f"{test_set_per}%",
+                        unsafe_allow_html=True,
+                    )
+
+                    st.divider()
+                    st.markdown("### Metrics")
+                    for metric in pipeline._metrics:
+                        st.markdown(
+                            f"<span style='color:purple;'>- **{metric.name.replace('_', ' ').capitalize()}** </span>",
+                            unsafe_allow_html=True,
+                        )
 
 
 else:

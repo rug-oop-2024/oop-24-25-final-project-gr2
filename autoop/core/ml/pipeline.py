@@ -8,6 +8,7 @@ from autoop.core.ml.feature import Feature
 from autoop.core.ml.metric import Metric
 from autoop.functional.preprocessing import preprocess_features
 import numpy as np
+from copy import deepcopy
 
 
 class Pipeline:
@@ -53,6 +54,18 @@ class Pipeline:
     @property
     def model(self):
         return self._model
+
+    @property
+    def metrics(self) -> List[Metric]:
+        return deepcopy(self._metrics)
+
+    @property
+    def input_features(self) -> List[Feature]:
+        return deepcopy(self._input_features)
+
+    @property
+    def target_feature(self) -> Feature:
+        return deepcopy(self._target_feature)
 
     @property
     def artifacts(self) -> List[Artifact]:
@@ -135,6 +148,15 @@ class Pipeline:
         self._predictions = predictions
 
     def execute(self):
+        """
+        Execute the pipeline. This method preprocesses the features,
+        splits the data, trains the model, evaluates the model
+        and returns the results.
+
+        Returns:
+            dict: A dictionary containing the results for the training set and
+            evaluation set.
+        """
         self._preprocess_features()
         self._split_data()
         self._train()
