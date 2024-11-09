@@ -5,6 +5,7 @@ from io import StringIO
 from app.core.system import AutoMLSystem
 from autoop.core.ml.feature import Feature
 from autoop.core.ml.pipeline import Pipeline
+from autoop.core.ml.dataset import Dataset
 from autoop.core.ml.metric import get_metric
 
 from autoop.core.ml.model import (
@@ -31,7 +32,6 @@ MODEL_OPTIONS = {
         "Multiple Linear Regression": MultipleLinearRegression,
     },
 }
-
 
 # Metrics
 METRICS = {
@@ -83,6 +83,16 @@ if datasets:
     if selected_dataset_name:
         # Retrieve the selected Artifact
         selected_artifact = dataset_dict[selected_dataset_name]
+        
+        selected_dataset = Dataset(
+            name=selected_artifact.name,
+            asset_path=selected_artifact.asset_path,
+            data=selected_artifact.data,
+            version=selected_artifact.version,
+            metadata=selected_artifact.metadata,
+            tags=selected_artifact.tags
+        )
+
 
         # Read the dataset into a pd DataFrame
         try:
@@ -94,9 +104,9 @@ if datasets:
             st.stop()
 
         st.write("### Dataset Preview")
-        st.dataframe(df.head())
+        st.dataframe(df)
 
-        # Downlad button for easier access to the dataset
+        # Download button for easier access to the dataset
         csv = df.to_csv(index=False)
         st.download_button(
             label="📥 Download CSV",
@@ -106,8 +116,6 @@ if datasets:
         )
 
         all_columns = df.columns.tolist()
-
-        # Selection of input features
 
         st.divider()
         st.subheader("Feature Selection")
@@ -166,7 +174,7 @@ if datasets:
             max_value=90,
             value=80,
             step=5,
-            help="Define the split ratio of the data(training%|testing%).",
+            help="Define the split ratio of the data (training% | testing%).",
         )
         test_set_per = 100 - train_set_per
         st.write(f"Training Data: {train_set_per}%")
@@ -228,19 +236,22 @@ if datasets:
 
                 pipeline = Pipeline(
                     metrics=metrics_objs,
-                    dataset=selected_artifact,
+                    dataset=selected_dataset,
                     model=model_obj,
                     input_features=input_feature_objs,
                     target_feature=target_feature_obj,
                     split=train_set_per / 100.0,
                 )
 
-                st.subheader("📑Pipeline Summary")
+                # Store the pipeline in session state
+                st.session_state['pipeline'] = pipeline
+
+                st.subheader("📑 Pipeline Summary")
 
                 with st.expander("Click to view extended summary"):
-                    st.markdown(" ### Model")
+                    st.markdown("### Model")
                     st.markdown(
-                        f" <span style='color:green;'>**Type:** </span> {pipeline.model.type.capitalize()}",
+                        f"<span style='color:green;'>**Type:**</span> {pipeline.model.type.capitalize()}",
                         unsafe_allow_html=True,
                     )
                     st.markdown(
@@ -257,14 +268,14 @@ if datasets:
                     st.markdown("### Input Features")
                     for feature in pipeline._input_features:
                         st.markdown(
-                            f"<span style='color:green;'>- **{feature.name}** </span>({feature.feature_type})",
+                            f"<span style='color:green;'>- **{feature.name}**</span> ({feature.feature_type})",
                             unsafe_allow_html=True,
                         )
 
                     st.divider()
                     st.markdown("### Target Feature")
                     st.markdown(
-                        f" <span style='color:green;'>- **{pipeline.target_feature.name}**</span> "
+                        f"<span style='color:green;'>- **{pipeline.target_feature.name}**</span> "
                         f"({pipeline.target_feature.feature_type})",
                         unsafe_allow_html=True,
                     )
@@ -272,7 +283,7 @@ if datasets:
                     st.divider()
                     st.markdown("### Split Ratio")
                     st.markdown(
-                        f" <span style='color:green;'>- **Training Data:** </span> "
+                        f"<span style='color:green;'>- **Training Data:**</span> "
                         f"{train_set_per}%",
                         unsafe_allow_html=True,
                     )
@@ -286,10 +297,41 @@ if datasets:
                     st.markdown("### Metrics")
                     for metric in pipeline._metrics:
                         st.markdown(
-                            f"<span style='color:purple;'>- **{metric.name.replace('_', ' ').capitalize()}** </span>",
+                            f"<span style='color:purple;'>- **{metric.name.replace('_', ' ').capitalize()}**</span>",
                             unsafe_allow_html=True,
                         )
 
+        # Check if a pipeline has been created
+        if 'pipeline' in st.session_state:
+            st.subheader("📈 Training and Evaluation")
+
+            if st.button("Run Pipeline"):
+                with st.spinner("Training the model..."):
+                    results = st.session_state['pipeline'].execute()
+
+                # Display training metrics
+                st.markdown("### Training Metrics")
+                train_metrics = results.get('train_metrics', [])
+                for metric_obj, value in train_metrics:
+                    st.write(f"**{metric_obj.name.replace('_', ' ').capitalize()}**: {value:.4f}")
+
+                # Display testing metrics
+                st.markdown("### Testing Metrics")
+                test_metrics = results.get('test_metrics', [])
+                for metric_obj, value in test_metrics:
+                    st.write(f"**{metric_obj.name.replace('_', ' ').capitalize()}**: {value:.4f}")
+
+                # # Display predictions
+                # st.markdown("### Predictions")
+
+                # train_pred = results.get('train_predictions', [])
+                # test_pred = results.get('test_predictions', [])
+                # st.write("#### Training Predictions")
+                # st.dataframe(train_pred, width=500)
+                # st.write("#### Testing Predictions")
+                # st.dataframe(test_pred, width=500)
+        else:
+            st.info("Create a pipeline first.")
 
 else:
     st.info("There are no datasets available. Please upload one to proceed.")
