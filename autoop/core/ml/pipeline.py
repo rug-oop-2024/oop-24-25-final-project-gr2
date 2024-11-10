@@ -7,6 +7,8 @@ from autoop.core.ml.model import Model
 from autoop.core.ml.feature import Feature
 from autoop.core.ml.metric import Metric
 from autoop.functional.preprocessing import preprocess_features
+
+
 import numpy as np
 from copy import deepcopy
 
@@ -21,6 +23,7 @@ class Pipeline:
         target_feature: Feature,
         split=0.8,
     ):
+        """ Initialize the Pipeline object. """
         self._dataset = dataset
         self._model = model
         self._input_features = input_features
@@ -41,6 +44,7 @@ class Pipeline:
             )
 
     def __str__(self):
+        """String representation of the Pipeline object."""
         return f"""
         Pipeline(
             model={self._model.type},
@@ -53,18 +57,22 @@ class Pipeline:
 
     @property
     def model(self):
+        """Get the model used in the pipeline"""
         return self._model
 
     @property
     def metrics(self) -> List[Metric]:
+        """Get the metrics used to evaluate the model"""
         return deepcopy(self._metrics)
 
     @property
     def input_features(self) -> List[Feature]:
+        """Get the input features"""
         return deepcopy(self._input_features)
 
     @property
     def target_feature(self) -> Feature:
+        """Get the target feature"""
         return deepcopy(self._target_feature)
 
     @property
@@ -96,9 +104,11 @@ class Pipeline:
         return artifacts
 
     def _register_artifact(self, name: str, artifact):
+        """Register an artifact with the pipeline"""
         self._artifacts[name] = artifact
 
     def _preprocess_features(self):
+        """Preprocess the input features and target feature"""
         (target_feature_name, target_data, artifact) = preprocess_features(
             [self._target_feature], self._dataset
         )[0]
@@ -114,7 +124,7 @@ class Pipeline:
                                in input_results]
 
     def _split_data(self):
-        # Split the data into training and testing sets
+        """Split the data into training and testing sets"""
         split = self._split
         self._train_X = [
             vector[: int(split * len(vector))]
@@ -130,14 +140,19 @@ class Pipeline:
                                                len(self._output_vector)):]
 
     def _compact_vectors(self, vectors: List[np.array]) -> np.array:
+        """ Concatenate the vectors into a single array"""
         return np.concatenate(vectors, axis=1)
 
     def _train(self):
+        """ Train the model on the training data"""
         X = self._compact_vectors(self._train_X)
         Y = self._train_y
         self._model.fit(X, Y)
 
     def _evaluate(self):
+        """
+        Evaluate the model on the test data and compute the specified metrics.
+        """
         X = self._compact_vectors(self._test_X)
         Y = self._test_y
         self._metrics_results = []
@@ -147,34 +162,53 @@ class Pipeline:
             self._metrics_results.append((metric, result))
         self._predictions = predictions
 
+    def _evaluate_train(self):
+        """
+        Evaluate the model on the training data and
+        compute the specified metrics.
+        """
+        X_train = self._compact_vectors(self._train_X)
+        Y_train = self._train_y
+        train_metrics_results = []
+        train_predictions = self._model.predict(X_train)
+        for metric in self._metrics:
+            result = metric(train_predictions, Y_train)
+            train_metrics_results.append((metric, result))
+        self._train_metrics_results = train_metrics_results
+        self._train_predictions = train_predictions
+
     def execute(self):
         """
-        Execute the pipeline. This method preprocesses the features,
-        splits the data, trains the model, evaluates the model
-        and returns the results.
+        Executes the pipeline by performing the following steps:
+        1. Preprocesses the input features.
+        2. Splits the data into training and testing sets.
+        3. Adjusts the target vectors for classification tasks.
+        4. Trains the model on the training data.
+        5. Evaluates the model on the test data.
+        6. Evaluates the model on the training data.
 
         Returns:
-            dict: A dictionary containing the results for the training set and
-            evaluation set.
+            dict: A dictionary containing:
+                - 'train_metrics': List of metrics results on the training set.
+                - 'test_metrics': List of metrics results on the test set.
+                - 'train_predictions': Predictions made on the training set.
+                - 'test_predictions': Predictions made on the test set.
         """
         self._preprocess_features()
         self._split_data()
+        if len(self._train_y.shape) > 1 and self._train_y.shape[1] > 1:
+            self._train_y = np.argmax(self._train_y, axis=1)
+            self._test_y = np.argmax(self._test_y, axis=1)
+        else:
+            self._train_y = self._train_y.ravel()
+            self._test_y = self._test_y.ravel()
+
         self._train()
-
-        # Training Set
-        train_X = self._compact_vectors(self._train_X)
-        train_y = self._train_y
-        train_predictions = self._model.predict(train_X)
-        train_results = []
-        for metric in self._metrics:
-            train_results.append((metric, metric(train_predictions, train_y)))
-
-        # Evaluation Set
         self._evaluate()
-
+        self._evaluate_train()
         return {
-            "train_metrics": train_results,
+            "train_metrics": self._train_metrics_results,
             "test_metrics": self._metrics_results,
-            "test_predictions": self._predictions,
-            "train_predictions": train_predictions
+            "train_predictions": self._train_predictions,
+            "test_predictions": self._predictions
         }

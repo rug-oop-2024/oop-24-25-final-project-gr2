@@ -27,13 +27,6 @@ class LassoRegressionModel(Model):
         serialized_model = pickle.dumps(self._model)
         return Artifact(name=name, data=serialized_model)
 
-    @classmethod
-    def load_from_artifact(cls, artifact: Artifact) -> "LassoRegressionModel":
-        model = pickle.loads(artifact.data)
-        instance = cls()
-        instance._model = model
-        return instance
-
 
 class GBRModel(Model):
     def __init__(self, parameters: dict = None) -> None:
@@ -54,13 +47,6 @@ class GBRModel(Model):
     def to_artifact(self, name: str) -> Artifact:
         serialized_model = pickle.dumps(self._model)
         return Artifact(name=name, data=serialized_model)
-
-    @classmethod
-    def load_from_artifact(cls, artifact: Artifact) -> "GBRModel":
-        model = pickle.loads(artifact.data)
-        instance = cls()
-        instance._model = model
-        return instance
 
 
 class RandomForestRegressionModel(Model):
@@ -83,15 +69,6 @@ class RandomForestRegressionModel(Model):
         serialized_model = pickle.dumps(self._model)
         return Artifact(name=name, data=serialized_model)
 
-    @classmethod
-    def load_from_artifact(
-        cls, artifact: Artifact
-    ) -> "RandomForestRegressionModel":
-        model = pickle.loads(artifact.data)
-        instance = cls()
-        instance._model = model
-        return instance
-
 
 class MultipleLinearRegression(Model):
     def __init__(self, parameters: dict = None) -> None:
@@ -112,12 +89,3 @@ class MultipleLinearRegression(Model):
     def to_artifact(self, name: str) -> Artifact:
         serialized_model = pickle.dumps(self._model)
         return Artifact(name=name, data=serialized_model)
-
-    @classmethod
-    def load_from_artifact(
-        cls, artifact: Artifact
-    ) -> "MultipleLinearRegression":
-        model = pickle.loads(artifact.data)
-        instance = cls()
-        instance._model = model
-        return instance

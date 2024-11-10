@@ -5,31 +5,32 @@ METRICS = [
     "mean_squared_error",
     "accuracy",
     "mean_absolute_error",
-    "mean_squared_log_error",
     "r_squared",
     "balanced_accuracy",
     "recall",
-    "mcc",
+    "hamming_loss",
+    "max_error"
 ]
 
 
 def get_metric(name: str):
+    """Returns the metric object based on the name."""
     if name == "mean_squared_error":
         return MeanSquaredError()
     elif name == "accuracy":
         return Accuracy()
     elif name == "mean_absolute_error":
         return MeanAbsoluteError()
-    elif name == "mean_squared_log_error":
-        return MeanSquaredLogError()
     elif name == "r_squared":
         return RSquared()
     elif name == "balanced_accuracy":
         return BalancedAccuracy()
     elif name == "recall":
         return Recall()
-    elif name == "mcc":
-        return MCC()
+    elif name == "hamming_loss":
+        return HammingLossMetric()
+    elif name == "max_error":
+        return MaxError()
     else:
         raise ValueError(f"Unknown metric name: {name}")
 
@@ -38,10 +39,12 @@ class Metric(ABC):
     """Base class for all metrics."""
 
     def __init__(self) -> None:
+        """ Initializes the name of the metric."""
         self._name = ""
 
     @property
     def name(self) -> str:
+        """ Returns the name of the metric."""
         return self._name
 
     @abstractmethod
@@ -55,10 +58,12 @@ class Metric(ABC):
 
 class MeanSquaredError(Metric):
     def __init__(self) -> None:
+        """ Initializes the name of the metric."""
         self._name = "mean_squared_error"
 
     @property
     def name(self) -> str:
+        """ Returns the name of the metric."""
         return self._name
 
     def __call__(self, ground_truth: np.ndarray,
@@ -70,10 +75,12 @@ class MeanSquaredError(Metric):
 
 class MeanAbsoluteError(Metric):
     def __init__(self) -> None:
+        """ Initializes the name of the metric."""
         self._name = "mean_absolute_error"
 
     @property
     def name(self) -> str:
+        """ Returns the name of the metric."""
         return self._name
 
     def __call__(self, predictions: np.ndarray,
@@ -85,35 +92,41 @@ class MeanAbsoluteError(Metric):
         return np.mean(np.abs(predictions - ground_truth))
 
 
-class MeanSquaredLogError(Metric):
+class MaxError(Metric):
     def __init__(self) -> None:
-        self._name = "mean_squared_log_error"
+        """Initializes the name of the metric."""
+        self._name = "max_error"
 
     @property
     def name(self) -> str:
+        """Returns the name of the metric."""
         return self._name
 
     def __call__(self, predictions: np.ndarray,
                  ground_truth: np.ndarray) -> float:
         """
-        Calculates Mean Squared Logarithmic Error
-        between predictions and ground truth.
+        Calculates the Maximum Error between predictions and ground truth.
+
+        Args:
+            predictions (np.ndarray): Model predictions.
+            ground_truth (np.ndarray): True target values.
+
+        Returns:
+            float: The computed Maximum Error.
         """
-        if np.any(predictions < 0) or np.any(ground_truth < 0):
-            raise ValueError("This metric does not work on negative values.")
 
-        log_predictions = np.log(1 + predictions)
-        log_ground_truth = np.log(1 + ground_truth)
-
-        return np.mean((log_predictions - log_ground_truth) ** 2)
+        absolute_errors = np.abs(ground_truth - predictions)
+        return np.max(absolute_errors)
 
 
 class RSquared(Metric):
     def __init__(self) -> None:
+        """ Initializes the name of the metric."""
         self._name = "r_squared"
 
     @property
     def name(self) -> str:
+        """ Returns the name of the metric."""
         return self._name
 
     def __call__(self, predictions: np.ndarray,
@@ -133,10 +146,12 @@ class Accuracy(Metric):
     """Calculates the accuracy of the model."""
 
     def __init__(self) -> None:
+        """ Initializes the name of the metric."""
         self._name = "accuracy"
 
     @property
     def name(self) -> str:
+        """ Returns the name of the metric."""
         return self._name
 
     def __call__(self, ground_truth: np.ndarray,
@@ -150,6 +165,8 @@ class ClassifcationMetricUsingCM(Metric):
     def __init__(self) -> None:
         """Initialize the confusion matrix."""
         self._confusion_matrix: np.ndarray = None
+        self._ground_truth: np.ndarray = None
+        self._predictions: np.ndarray = None
 
     def __call__(self, ground_truth: np.ndarray,
                  predictions: np.ndarray) -> float:
@@ -158,15 +175,21 @@ class ClassifcationMetricUsingCM(Metric):
         self._confusion_matrix = self._compute_confusion_matrix(
             predictions, ground_truth
         )
+
+        self._ground_truth = ground_truth
+        self._predictions = predictions
+        self._confusion_matrix = self._compute_confusion_matrix(
+            ground_truth, predictions
+        )
         return self.compute_metric()
 
-    def _compute_confusion_matrix(
-        ground_truth: np.ndarray, predictions: np.ndarray
-    ) -> np.ndarray:
+    def _compute_confusion_matrix(self, ground_truth: np.ndarray,
+                                  predictions: np.ndarray) -> np.ndarray:
         """
         Compute the confusion matrix for multi-class classification.
         """
-        classes = np.unique(np.concatenate((predictions, ground_truth)))
+        joint_classes = np.unique(np.concatenate((ground_truth, predictions)))
+        classes = joint_classes.flatten()
         class_to_index = {cls: idx for idx, cls in enumerate(classes)}
 
         conf_matrix = np.zeros((len(classes), len(classes)), dtype=int)
@@ -183,35 +206,29 @@ class ClassifcationMetricUsingCM(Metric):
         pass
 
 
-class MCC(ClassifcationMetricUsingCM):
-    """Class that uses the confusion matrix to calculate
-    the Matthews Correlation Coefficient."""
+class HammingLossMetric(ClassifcationMetricUsingCM):
+    """Class that uses the confusion matrix
+    to calculate the Hamming Loss metric."""
 
     def __init__(self) -> None:
-        self._name = "mcc"
+        """ Initializes the name of the metric."""
+        self._name = "hamming_loss"
 
     @property
     def name(self) -> str:
+        """ Returns the name of the metric."""
         return self._name
 
     def compute_metric(self) -> float:
-        """Computes the Matthews Correlation Coefficient."""
+        """Computes the Hamming Loss metric."""
         conf_matrix = self._confusion_matrix
-        correct_pred = conf_matrix.diagonal().sum()
-        class_count = conf_matrix.sum(axis=1)
-        pred_class_count = conf_matrix.sum(axis=0)
-        total = conf_matrix.sum()
-
-        numerator = (correct_pred * total) - (class_count * pred_class_count)
-        denominator = np.sqrt(
-            (total**2 - np.sum(pred_class_count**2))
-            * (total**2 - np.sum(class_count**2))
-        )
-
-        if denominator == 0:
-            return 0.0
+        total_samples = conf_matrix.sum()
+        incorrect_predictions = total_samples - np.diag(conf_matrix).sum()
+        if total_samples > 0:
+            hamming_loss = incorrect_predictions / total_samples
         else:
-            return numerator / denominator
+            hamming_loss = 0.0
+        return hamming_loss
 
 
 class BalancedAccuracy(ClassifcationMetricUsingCM):
@@ -219,15 +236,16 @@ class BalancedAccuracy(ClassifcationMetricUsingCM):
     to calculate the balanced accuracy metric."""
 
     def __init__(self) -> None:
+        """ Initializes the name of the metric."""
         self._name = "balanced_accuracy"
 
     @property
     def name(self) -> str:
+        """ Returns the name of the metric."""
         return self._name
 
     def compute_metric(self) -> float:
         """Computes the balanced accuracy metric."""
-
         conf_matrix = self._confusion_matrix
         num_classes = conf_matrix.shape[0]
 
@@ -266,13 +284,17 @@ class Recall(ClassifcationMetricUsingCM):
     """Class that uses the confusion matrix to calculate the recall metric."""
 
     def __init__(self) -> None:
+        """ Initializes the name of the metric."""
         self._name = "recall"
 
     @property
     def name(self) -> str:
+        """ Returns the name of the metric."""
         return self._name
 
     def compute_metric(self) -> float:
+        """Computes the recall metric."""
+
         conf_matrix = self._confusion_matrix
 
         true_positives = np.diag(conf_matrix)

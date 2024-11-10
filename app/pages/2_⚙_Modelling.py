@@ -38,10 +38,13 @@ METRICS = {
     "Regression": [
         "mean_squared_error",
         "mean_absolute_error",
-        "mean_squared_log_error",
         "r_squared",
+        "max_error",
     ],
-    "Classification": ["accuracy", "balanced_accuracy", "recall", "mcc"],
+    "Classification": ["accuracy",
+                       "balanced_accuracy",
+                       "recall",
+                       "hamming_loss"],
 }
 
 st.set_page_config(page_title="Modelling", page_icon="📈")
@@ -83,7 +86,7 @@ if datasets:
     if selected_dataset_name:
         # Retrieve the selected Artifact
         selected_artifact = dataset_dict[selected_dataset_name]
-        
+
         selected_dataset = Dataset(
             name=selected_artifact.name,
             asset_path=selected_artifact.asset_path,
@@ -251,6 +254,7 @@ if datasets:
                 with st.expander("Click to view extended summary"):
                     st.markdown("### Model")
                     st.markdown(
+                        f"<span style='color:green;'>**Chosen Model:**</span> {selected_model_name}<br>"
                         f"<span style='color:green;'>**Type:**</span> {pipeline.model.type.capitalize()}",
                         unsafe_allow_html=True,
                     )
@@ -320,16 +324,6 @@ if datasets:
                 test_metrics = results.get('test_metrics', [])
                 for metric_obj, value in test_metrics:
                     st.write(f"**{metric_obj.name.replace('_', ' ').capitalize()}**: {value:.4f}")
-
-                # # Display predictions
-                # st.markdown("### Predictions")
-
-                # train_pred = results.get('train_predictions', [])
-                # test_pred = results.get('test_predictions', [])
-                # st.write("#### Training Predictions")
-                # st.dataframe(train_pred, width=500)
-                # st.write("#### Testing Predictions")
-                # st.dataframe(test_pred, width=500)
         else:
             st.info("Create a pipeline first.")
 
