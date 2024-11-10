@@ -40,5 +40,7 @@ class Model(ABC):
 
     @abstractmethod
     def to_artifact(self, name: str) -> Artifact:
+        """Abstract method to serialize the model
+        and return an Artifact object."""
         serialized_model = pickle.dumps(self._model)
         return Artifact(name=name, data=serialized_model)

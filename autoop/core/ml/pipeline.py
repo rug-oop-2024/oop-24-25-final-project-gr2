@@ -201,8 +201,8 @@ class Pipeline:
             self._train_y = np.argmax(self._train_y, axis=1)
             self._test_y = np.argmax(self._test_y, axis=1)
         else:
-            self._train_y = self._train_y.ravel()
-            self._test_y = self._test_y.ravel()
+            self._train_y = self._train_y.flatten()
+            self._test_y = self._test_y.flatten()
 
         self._train()
         self._evaluate()

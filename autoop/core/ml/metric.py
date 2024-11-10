@@ -77,6 +77,7 @@ class MeanSquaredError(Metric):
 
 class MeanAbsoluteError(Metric):
     """"Metric for the Mean Absolute Error."""
+
     def __init__(self) -> None:
         """ Initializes the name of the metric."""
         self._name = "mean_absolute_error"
@@ -161,6 +162,7 @@ class Accuracy(Metric):
 
     def __call__(self, ground_truth: np.ndarray,
                  predictions: np.ndarray) -> float:
+        """Calculates the accuracy of the model."""
         return np.mean(ground_truth == predictions)
 
 

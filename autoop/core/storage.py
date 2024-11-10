@@ -6,7 +6,7 @@ from glob import glob
 
 class NotFoundError(Exception):
     """ Raised when a path is not found """
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         """ Initialize the exception """
         super().__init__(f"Path not found: {path}")
 
@@ -14,7 +14,7 @@ class NotFoundError(Exception):
 class Storage(ABC):
     """ Abstract class for storage """
     @abstractmethod
-    def save(self, data: bytes, path: str):
+    def save(self, data: bytes, path: str) -> None:
         """
         Save data to a given path
         Args:
@@ -35,7 +35,7 @@ class Storage(ABC):
         pass
 
     @abstractmethod
-    def delete(self, path: str):
+    def delete(self, path: str) -> None:
         """
         Delete data at a given path
         Args:

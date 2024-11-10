@@ -14,7 +14,7 @@ def detect_feature_types(dataset: Dataset) -> List[Feature]:
     features = []
     numerical = data.select_dtypes(
         include=["int64", "float64"]
-        ).columns.tolist()
+    ).columns.tolist()
     categorical = data.select_dtypes(
         include=["object", "category", "bool"]
     ).columns.tolist()

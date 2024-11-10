@@ -27,10 +27,10 @@ class Feature(Dataset):
         """String representation of the Feature object."""
         return f"Feature(name='{self._name}', type='{self._feature_type}')"
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: "Feature") -> bool:
         """Equality comparison of two Feature objects."""
         return (
-            isinstance(other, Feature)
-            and self._name == other._name
-            and self._feature_type == other._feature_type
+            isinstance(other, Feature) and
+            self._name == other._name and
+            self._feature_type == other._feature_type
         )
