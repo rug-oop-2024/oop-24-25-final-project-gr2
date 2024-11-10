@@ -96,7 +96,6 @@ if datasets:
             tags=selected_artifact.tags
         )
 
-
         # Read the dataset into a pd DataFrame
         try:
             # decode csv file and read using pd

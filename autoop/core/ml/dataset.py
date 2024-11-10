@@ -5,14 +5,16 @@ import base64
 
 
 class Dataset(Artifact):
-    def __init__(self, *args, **kwargs):
-        """Dataset class to handle dataset artifacts."""
+    """ Dataset class to handle dataset artifacts. """
+
+    def __init__(self, *args, **kwargs) -> None:
+        """ Initialize a Dataset object. """
         super().__init__(type="dataset", *args, **kwargs)
 
     @staticmethod
     def from_dataframe(
         data: pd.DataFrame, name: str, asset_path: str, version: str = "1.0.0"
-    ):
+    ) -> "Dataset":
         """Create a Dataset object from a pandas DataFrame."""
         return Dataset(
             name=name,

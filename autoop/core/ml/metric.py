@@ -13,7 +13,7 @@ METRICS = [
 ]
 
 
-def get_metric(name: str):
+def get_metric(name: str) -> "Metric":
     """Returns the metric object based on the name."""
     if name == "mean_squared_error":
         return MeanSquaredError()
@@ -50,6 +50,7 @@ class Metric(ABC):
     @abstractmethod
     def __call__(self, ground_truth: np.ndarray,
                  predictions: np.ndarray) -> float:
+        """ Abstract method to calculate the metric."""
         pass
 
 
@@ -57,6 +58,7 @@ class Metric(ABC):
 
 
 class MeanSquaredError(Metric):
+    """ Metric for the Mean Squared Error."""
     def __init__(self) -> None:
         """ Initializes the name of the metric."""
         self._name = "mean_squared_error"
@@ -74,6 +76,7 @@ class MeanSquaredError(Metric):
 
 
 class MeanAbsoluteError(Metric):
+    """"Metric for the Mean Absolute Error."""
     def __init__(self) -> None:
         """ Initializes the name of the metric."""
         self._name = "mean_absolute_error"
@@ -93,6 +96,7 @@ class MeanAbsoluteError(Metric):
 
 
 class MaxError(Metric):
+    """Metric for the Maximum Error."""
     def __init__(self) -> None:
         """Initializes the name of the metric."""
         self._name = "max_error"
@@ -120,6 +124,7 @@ class MaxError(Metric):
 
 
 class RSquared(Metric):
+    """Metric for the R-squared."""
     def __init__(self) -> None:
         """ Initializes the name of the metric."""
         self._name = "r_squared"

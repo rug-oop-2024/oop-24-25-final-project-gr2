@@ -14,6 +14,7 @@ from copy import deepcopy
 
 
 class Pipeline:
+    """ A class to represent a machine learning pipeline. """
     def __init__(
         self,
         metrics: List[Metric],
@@ -21,8 +22,8 @@ class Pipeline:
         model: Model,
         input_features: List[Feature],
         target_feature: Feature,
-        split=0.8,
-    ):
+        split: float = 0.8,
+    ) -> None:
         """ Initialize the Pipeline object. """
         self._dataset = dataset
         self._model = model
@@ -43,7 +44,7 @@ class Pipeline:
                 "Model type must be regression for continuous target feature"
             )
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of the Pipeline object."""
         return f"""
         Pipeline(
@@ -56,7 +57,7 @@ class Pipeline:
         """
 
     @property
-    def model(self):
+    def model(self) -> Model:
         """Get the model used in the pipeline"""
         return self._model
 
@@ -103,11 +104,11 @@ class Pipeline:
         )
         return artifacts
 
-    def _register_artifact(self, name: str, artifact):
+    def _register_artifact(self, name: str, artifact: Artifact) -> None:
         """Register an artifact with the pipeline"""
         self._artifacts[name] = artifact
 
-    def _preprocess_features(self):
+    def _preprocess_features(self) -> None:
         """Preprocess the input features and target feature"""
         (target_feature_name, target_data, artifact) = preprocess_features(
             [self._target_feature], self._dataset
@@ -123,7 +124,7 @@ class Pipeline:
         self._input_vectors = [data for (feature_name, data, artifact)
                                in input_results]
 
-    def _split_data(self):
+    def _split_data(self) -> None:
         """Split the data into training and testing sets"""
         split = self._split
         self._train_X = [
@@ -143,13 +144,13 @@ class Pipeline:
         """ Concatenate the vectors into a single array"""
         return np.concatenate(vectors, axis=1)
 
-    def _train(self):
+    def _train(self) -> None:
         """ Train the model on the training data"""
         X = self._compact_vectors(self._train_X)
         Y = self._train_y
         self._model.fit(X, Y)
 
-    def _evaluate(self):
+    def _evaluate(self) -> None:
         """
         Evaluate the model on the test data and compute the specified metrics.
         """
@@ -162,7 +163,7 @@ class Pipeline:
             self._metrics_results.append((metric, result))
         self._predictions = predictions
 
-    def _evaluate_train(self):
+    def _evaluate_train(self) -> None:
         """
         Evaluate the model on the training data and
         compute the specified metrics.
@@ -177,7 +178,7 @@ class Pipeline:
         self._train_metrics_results = train_metrics_results
         self._train_predictions = train_predictions
 
-    def execute(self):
+    def execute(self) -> dict:
         """
         Executes the pipeline by performing the following steps:
         1. Preprocesses the input features.
