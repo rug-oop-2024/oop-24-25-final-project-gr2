@@ -1,12 +1,14 @@
 import streamlit as st
 import pandas as pd
 from io import StringIO
+import pickle
 
 from app.core.system import AutoMLSystem
 from autoop.core.ml.feature import Feature
 from autoop.core.ml.pipeline import Pipeline
 from autoop.core.ml.dataset import Dataset
 from autoop.core.ml.metric import get_metric
+from autoop.core.ml.artifact import Artifact  # Import Artifact
 
 from autoop.core.ml.model import (
     LassoRegressionModel,
@@ -41,22 +43,22 @@ METRICS = {
         "r_squared",
         "max_error",
     ],
-    "Classification": ["accuracy",
-                       "balanced_accuracy",
-                       "recall",
-                       "hamming_loss"],
+    "Classification": [
+        "accuracy",
+        "balanced_accuracy",
+        "recall",
+        "hamming_loss",
+    ],
 }
 
 st.set_page_config(page_title="Modelling", page_icon="📈")
 
 
 def write_helper_text(text: str):
-    """ Helper function to write text a specific color. """
     st.write(f'<p style="color: #888;">{text}</p>', unsafe_allow_html=True)
 
 
 def feature_type_to_str(f_dtype) -> str:
-    """ Convert feature type to string. """
     if f_dtype in ["int64", "float64"]:
         return "numerical"
     elif f_dtype in ["object", "bool", "category"]:
@@ -95,12 +97,12 @@ if datasets:
             data=selected_artifact.data,
             version=selected_artifact.version,
             metadata=selected_artifact.metadata,
-            tags=selected_artifact.tags
+            tags=selected_artifact.tags,
         )
 
         # Read the dataset into a pd DataFrame
         try:
-            # decode csv file and read using pd
+            # Decode csv file and read using pandas
             csv_str = selected_artifact.data.decode()
             df = pd.read_csv(StringIO(csv_str))
         except Exception as e:
@@ -133,6 +135,7 @@ if datasets:
             st.warning("Select AT LEAST ONE input feature.")
 
         # Selection of target feature
+
         target_feature = st.selectbox(
             "Select target feature",
             options=[col for col in all_columns if col not in input_features],
@@ -156,6 +159,7 @@ if datasets:
         st.subheader("Model Selection")
 
         # Selecting model
+
         available_models = MODEL_OPTIONS.get(task_type, {})
         model_names = list(available_models.keys())
 
@@ -169,6 +173,7 @@ if datasets:
             selected_model = available_models[selected_model_name]
 
         # Split ratio
+
         st.divider()
         st.subheader("Split Ratio")
 
@@ -207,7 +212,7 @@ if datasets:
         if not select_metrics:
             st.warning("Select AT LEAST ONE metric.")
 
-        # Create the pipeline
+        # Create Pipeline
 
         if st.button("Create Pipeline"):
             # Check that all required selections are made
@@ -227,7 +232,8 @@ if datasets:
                     )
 
                 target_feature_type = feature_type_to_str(
-                    df[target_feature].dtype)
+                    df[target_feature].dtype
+                )
                 target_feature_obj = Feature(
                     name=target_feature, feature_type=target_feature_type
                 )
@@ -247,22 +253,19 @@ if datasets:
                     split=train_set_per / 100.0,
                 )
 
-                # Store the pipeline in session state
-                st.session_state['pipeline'] = pipeline
+                # Store the pipeline in session state to use later
+                st.session_state["pipeline"] = pipeline
 
                 st.subheader("📑 Pipeline Summary")
 
                 with st.expander("Click to view extended summary"):
                     st.markdown("### Model")
                     st.markdown(
-                        f"<span style='color:green;'>**Chosen Model:**</span> {selected_model_name}<br>"
-                        f"<span style='color:green;'>**Type:**</span> {pipeline.model.type.capitalize()}",
-                        unsafe_allow_html=True,
+                        f"**Chosen Model:** {selected_model_name}<br>"
+                        f"**Type:** {pipeline.model.type.capitalize()}",
+                        unsafe_allow_html=True
                     )
-                    st.markdown(
-                        "<span style='color:green;'>**Parameters:**</span>",
-                        unsafe_allow_html=True,
-                    )
+                    st.markdown("**Parameters:**")
                     model_params = pipeline.model.parameters
                     if model_params:
                         st.json(model_params)
@@ -273,57 +276,112 @@ if datasets:
                     st.markdown("### Input Features")
                     for feature in pipeline._input_features:
                         st.markdown(
-                            f"<span style='color:green;'>- **{feature.name}**</span> ({feature.feature_type})",
-                            unsafe_allow_html=True,
+                            f"- **{feature.name}** ({feature.feature_type})"
                         )
 
                     st.divider()
                     st.markdown("### Target Feature")
                     st.markdown(
-                        f"<span style='color:green;'>- **{pipeline.target_feature.name}**</span> "
-                        f"({pipeline.target_feature.feature_type})",
-                        unsafe_allow_html=True,
+                        f"- **{pipeline.target_feature.name}** "
+                        f"({pipeline.target_feature.feature_type})"
                     )
 
                     st.divider()
                     st.markdown("### Split Ratio")
                     st.markdown(
-                        f"<span style='color:green;'>- **Training Data:**</span> "
-                        f"{train_set_per}%",
-                        unsafe_allow_html=True,
+                        f"- **Training Data:** "
+                        f"{train_set_per}%"
                     )
                     st.markdown(
-                        f"<span style='color:green;'>- **Testing Data:**</span> "
-                        f"{test_set_per}%",
-                        unsafe_allow_html=True,
+                        f"- **Testing Data:** "
+                        f"{test_set_per}%"
                     )
 
                     st.divider()
                     st.markdown("### Metrics")
                     for metric in pipeline._metrics:
                         st.markdown(
-                            f"<span style='color:purple;'>- **{metric.name.replace('_', ' ').capitalize()}**</span>",
-                            unsafe_allow_html=True,
+                            f"- *{metric.name.replace('_', ' ').capitalize()}*"
                         )
-        # Check if a pipeline has been created
-        if 'pipeline' in st.session_state:
+
+                st.success("Pipeline has been created successfully!")
+
+        # Check if a pipeline exists
+        if "pipeline" in st.session_state:
             st.subheader("📈 Training and Evaluation")
 
             if st.button("Run Pipeline"):
                 with st.spinner("Training the model..."):
-                    results = st.session_state['pipeline'].execute()
+                    results = st.session_state["pipeline"].execute()
 
-                # Display training metrics
+                # Show training metrics
                 st.markdown("### Training Metrics")
-                train_metrics = results.get('train_metrics', [])
+                train_metrics = results.get("train_metrics", [])
                 for metric_obj, value in train_metrics:
-                    st.write(f"**{metric_obj.name.replace('_', ' ').capitalize()}**: {value:.4f}")
+                    mn = metric_obj.name.replace('_', ' ').capitalize()
+                    formatted_metric = f"**{mn}**: {value:.4f}"
+                    st.write(formatted_metric)
 
-                # Display testing metrics
+                # Show testing metrics
                 st.markdown("### Testing Metrics")
-                test_metrics = results.get('test_metrics', [])
+                test_metrics = results.get("test_metrics", [])
                 for metric_obj, value in test_metrics:
-                    st.write(f"**{metric_obj.name.replace('_', ' ').capitalize()}**: {value:.4f}")
+                    mn = metric_obj.name.replace('_', ' ').capitalize()
+                    formatted_metric = f"**{mn}**: {value:.4f}"
+                    st.write(formatted_metric)
+
+            # Prompt the user to save the pipeline
+            st.subheader("💾 Save Pipeline")
+            st.write(
+                "Save the pipeline for future use."
+            )
+
+            pipeline_name = st.text_input(
+                "Enter a name for the pipeline",
+            )
+
+            pipeline_version = st.text_input(
+                "Enter a version for the pipeline",
+                value="1.0.0",
+            )
+
+            if st.button("Save Pipeline"):
+                if not pipeline_name:
+                    st.warning("Please provide a name for the pipeline.")
+                elif not pipeline_version:
+                    st.warning("Please provide a version for the pipeline.")
+                else:
+                    # Serialize the pipeline
+                    serialized_pipeline = pickle.dumps(
+                        st.session_state["pipeline"]
+                    )
+
+                    # Create an Artifact
+                    artifact = Artifact(
+                        name=pipeline_name,
+                        asset_path=(
+                            f"pipelines/{pipeline_name}_{pipeline_version}.pkl"
+                        ),
+                        data=serialized_pipeline,
+                        version=pipeline_version,
+                        metadata={
+                            "task_type": task_type,
+                            "model_name": selected_model_name,
+                            "input_features": input_features,
+                            "target_feature": target_feature,
+                            "metrics": select_metrics,
+                            "split_ratio": train_set_per / 100.0,
+                        },
+                        type="pipeline",
+                        tags=[],
+                    )
+
+                    automl.registry.register(artifact)
+
+                    st.success(
+                        f"Pipeline '{pipeline_name}' "
+                        f"(version {pipeline_version}) has been saved."
+                    )
         else:
             st.info("Create a pipeline first.")
 
