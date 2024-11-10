@@ -142,6 +142,9 @@ class RSquared(Metric):
         """
         total_variance = np.sum((ground_truth - np.mean(ground_truth)) ** 2)
         residual_variance = np.sum((ground_truth - predictions) ** 2)
+
+        if total_variance == 0:
+            return 0.0
         return 1 - (residual_variance / total_variance)
 
 
@@ -308,5 +311,7 @@ class Recall(ClassifcationMetricUsingCM):
         actual_positives = np.sum(conf_matrix, axis=1)
 
         recall_per_class = np.divide(true_positives, actual_positives)
+
+        recall_per_class = np.nan_to_num(recall_per_class)
 
         return np.mean(recall_per_class)

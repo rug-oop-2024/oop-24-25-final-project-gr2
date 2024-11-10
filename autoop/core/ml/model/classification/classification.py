@@ -37,7 +37,7 @@ class GradientBoostingClassificationModel(Model):
 
     def to_artifact(self, name: str) -> Artifact:
         """Returns an Artifact object containing the serialized model."""
-        super().to_artifact(name)
+        return super().to_artifact(name)
 
 
 class LogisticRegressionModel(Model):
@@ -70,7 +70,7 @@ class LogisticRegressionModel(Model):
 
     def to_artifact(self, name: str) -> Artifact:
         """Returns an Artifact object containing the serialized model."""
-        super().to_artifact(name)
+        return super().to_artifact(name)
 
 
 class RandomForestClassificationModel(Model):
@@ -102,4 +102,4 @@ class RandomForestClassificationModel(Model):
 
     def to_artifact(self, name: str) -> Artifact:
         """Returns an Artifact object containing the serialized model."""
-        super().to_artifact(name)
+        return super().to_artifact(name)

@@ -35,7 +35,7 @@ class LassoRegressionModel(Model):
 
     def to_artifact(self, name: str) -> Artifact:
         """Serializes the model and returns an Artifact object."""
-        super().to_artifact(name)
+        return super().to_artifact(name)
 
 
 class GBRModel(Model):
@@ -67,7 +67,7 @@ class GBRModel(Model):
 
     def to_artifact(self, name: str) -> Artifact:
         """Serializes the model and returns an Artifact object."""
-        super().to_artifact(name)
+        return super().to_artifact(name)
 
 
 class RandomForestRegressionModel(Model):
@@ -99,7 +99,7 @@ class RandomForestRegressionModel(Model):
 
     def to_artifact(self, name: str) -> Artifact:
         """Serializes the model and returns an Artifact object."""
-        super().to_artifact(name)
+        return super().to_artifact(name)
 
 
 class MultipleLinearRegression(Model):
@@ -132,4 +132,4 @@ class MultipleLinearRegression(Model):
 
     def to_artifact(self, name: str) -> Artifact:
         """Serializes the model and returns an Artifact object."""
-        super().to_artifact(name)
+        return super().to_artifact(name)
