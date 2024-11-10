@@ -54,11 +54,13 @@ METRICS = {
 st.set_page_config(page_title="Modelling", page_icon="📈")
 
 
-def write_helper_text(text: str):
+def write_helper_text(text: str) -> None:
+    """ Write helper text with a specific color """
     st.write(f'<p style="color: #888;">{text}</p>', unsafe_allow_html=True)
 
 
-def feature_type_to_str(f_dtype) -> str:
+def feature_type_to_str(f_dtype: str) -> str:
+    """ Convert feature type to string """
     if f_dtype in ["int64", "float64"]:
         return "numerical"
     elif f_dtype in ["object", "bool", "category"]:
