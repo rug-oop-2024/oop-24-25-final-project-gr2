@@ -40,3 +40,7 @@ In the **modelling page** the user can choose their own configuration for datase
 ### Extra Requirenments 
 
 I also implemented the page **deployment**, where the existing pipelines can be seen from a menu and selected. Upon selection a summary of the pipeline will be displayed.
+
+### Notes 
+
+There are datasets already saved in the app, that can be used to test the functionality.

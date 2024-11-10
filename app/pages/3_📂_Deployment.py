@@ -17,8 +17,7 @@ if pipelines:
 
     selected_pipeline_name = st.selectbox(
         "Select a pipeline to deploy",
-        options=pipeline_names,
-        help="Choose a saved pipeline from the artifact registry.",
+        options=pipeline_names
     )
 
     if selected_pipeline_name:

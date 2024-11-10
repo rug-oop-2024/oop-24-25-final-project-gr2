@@ -85,8 +85,7 @@ if datasets:
     # Select box for choosing a dataset
     selected_dataset_name = st.selectbox(
         "Select a dataset 📊",
-        options=dataset_names,
-        help="Choose a dataset from the artifact registry to model.",
+        options=dataset_names
     )
 
     if selected_dataset_name:
@@ -141,7 +140,7 @@ if datasets:
         target_feature = st.selectbox(
             "Select target feature",
             options=[col for col in all_columns if col not in input_features],
-            help="Choose ONE target feature for the model.",
+            help="Choose one target feature for the model.",
         )
 
         if target_feature:
