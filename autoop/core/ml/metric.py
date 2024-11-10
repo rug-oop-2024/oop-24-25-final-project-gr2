@@ -76,7 +76,7 @@ class MeanSquaredError(Metric):
 
 
 class MeanAbsoluteError(Metric):
-    """"Metric for the Mean Absolute Error."""
+    """Metric for the Mean Absolute Error."""
 
     def __init__(self) -> None:
         """ Initializes the name of the metric."""

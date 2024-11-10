@@ -29,8 +29,7 @@ class Feature(Dataset):
 
     def __eq__(self, other: "Feature") -> bool:
         """Equality comparison of two Feature objects."""
-        return (
-            isinstance(other, Feature) and
-            self._name == other._name and
-            self._feature_type == other._feature_type
+        return isinstance(other, Feature) and (
+            self._name == other._name and (
+                self._feature_type == other._feature_type)
         )

@@ -28,7 +28,7 @@ class Artifact:
         self._id = self._generate_id()
 
     def _generate_id(self) -> str:
-        """"Generate a unique id for the artifact."""
+        """Generate a unique id for the artifact."""
         if not self._asset_path:
             raise ValueError("asset_path must be non-empty.")
         if not self._version:

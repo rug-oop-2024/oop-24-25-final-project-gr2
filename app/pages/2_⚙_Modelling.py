@@ -51,10 +51,12 @@ st.set_page_config(page_title="Modelling", page_icon="📈")
 
 
 def write_helper_text(text: str):
+    """ Helper function to write text a specific color. """
     st.write(f'<p style="color: #888;">{text}</p>', unsafe_allow_html=True)
 
 
 def feature_type_to_str(f_dtype) -> str:
+    """ Convert feature type to string. """
     if f_dtype in ["int64", "float64"]:
         return "numerical"
     elif f_dtype in ["object", "bool", "category"]:
@@ -303,7 +305,6 @@ if datasets:
                             f"<span style='color:purple;'>- **{metric.name.replace('_', ' ').capitalize()}**</span>",
                             unsafe_allow_html=True,
                         )
-
         # Check if a pipeline has been created
         if 'pipeline' in st.session_state:
             st.subheader("📈 Training and Evaluation")
