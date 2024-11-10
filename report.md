@@ -43,4 +43,7 @@ I also implemented the page **deployment**, where the existing pipelines can be 
 
 ### Notes 
 
-There are datasets already saved in the app, that can be used to test the functionality.
+There are datasets already saved in the app, that can be used to test the functionality. 
+There are also already saved pipeline configurations in deployement from testing.
+The datasets used for testing are available in the datasets folder.
+Everything from my testing of the app is present in assets. 
